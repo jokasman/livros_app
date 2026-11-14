@@ -21,17 +21,14 @@ PWA para registar os livros que já leste, estás a ler ou queres ler. Funciona 
 4. **Authentication → URL Configuration**:
    - **Site URL**: `https://jokasman.github.io/livros_app/`
    - **Redirect URLs**: acrescenta `https://jokasman.github.io/livros_app/**` e `http://localhost:5173/**`
-5. **Project Settings → API**: copia o **Project URL** e a chave **anon / public**.
+O URL e a chave pública (*publishable*) do projeto já estão em [`.env.production`](.env.production).
 
-> A chave *anon* pode estar no código público: sem sessão iniciada não dá acesso a nada, e com sessão só dá acesso aos livros do próprio utilizador.
+> A chave pública pode estar no código: sem sessão iniciada não dá acesso a nada, e com sessão só dá acesso aos livros do próprio utilizador. **Nunca** coloques aqui a *secret key* nem a *service_role*.
 
 ### 2. Publicação no GitHub Pages
 
 1. No repositório: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-2. **Settings → Secrets and variables → Actions → Variables → New repository variable**:
-   - `VITE_SUPABASE_URL` = Project URL
-   - `VITE_SUPABASE_ANON_KEY` = chave anon
-   - `VITE_GOOGLE_BOOKS_KEY` = *(opcional, recomendado)* chave da Google Books API
+2. *(Opcional, recomendado)* **Settings → Secrets and variables → Actions → Variables → New repository variable**: `VITE_GOOGLE_BOOKS_KEY` = chave da Google Books API.
 3. Cada `push` para `main` compila e publica em `https://jokasman.github.io/livros_app/`. Também podes correr o workflow à mão em **Actions → Publicar no GitHub Pages → Run workflow**.
 
 #### Chave da Google Books (recomendado)
@@ -55,7 +52,6 @@ A câmara só funciona em HTTPS (o GitHub Pages já usa HTTPS). No iPhone, se a 
 
 ```bash
 npm install
-cp .env.example .env.local   # preenche os valores
 npm run dev                  # http://localhost:5173
 npm test                     # testes unitários
 npm run build                # compila para dist/
