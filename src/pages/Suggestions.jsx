@@ -11,6 +11,7 @@ export default function Suggestions() {
   const [books, setBooks] = useState(() => cachedShelf())
   const [wish, setWish] = useState('')
   const [includeWant, setIncludeWant] = useState(true)
+  const [includeNotes, setIncludeNotes] = useState(true)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function Suggestions() {
       .catch(() => {})
   }, [])
 
-  const prompt = useMemo(() => buildSuggestionPrompt(books, { wish, includeWant }), [books, wish, includeWant])
+  const prompt = useMemo(() => buildSuggestionPrompt(books, { wish, includeWant, includeNotes }), [books, wish, includeWant, includeNotes])
   const links = aiLinks(prompt)
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
   const tooLongForUrl = prompt.length > MAX_URL_PROMPT
@@ -65,7 +66,7 @@ export default function Suggestions() {
       <div className="stack">
         <p className="muted small">
           A app prepara um pedido com os teus livros e avaliações para enviares a uma IA (Claude, ChatGPT…). Nada é
-          enviado sem escolheres a app.
+          enviado sem escolheres a app. Cada livro vai com título, autores, edição, ISBN, avaliação e datas.
         </p>
 
         <section className="card stack">
@@ -81,6 +82,10 @@ export default function Suggestions() {
             <input type="checkbox" checked={includeWant} onChange={(e) => setIncludeWant(e.target.checked)} />
             <span>Incluir a lista "Quero ler" (para não repetir)</span>
           </label>
+          <label className="toggle">
+            <input type="checkbox" checked={includeNotes} onChange={(e) => setIncludeNotes(e.target.checked)} />
+            <span>Incluir as minhas notas pessoais (ajudam a IA a perceber o que gostaste)</span>
+          </label>
         </section>
 
         <div className="stack">
@@ -88,6 +93,12 @@ export default function Suggestions() {
             <button type="button" className="btn btn-block" onClick={share}>
               Partilhar com uma app de IA
             </button>
+          )}
+          {tooLongForUrl && (
+            <p className="muted small">
+              O texto é demasiado longo para abrir diretamente no Claude ou no ChatGPT. Usa{' '}
+              {canShare ? '"Partilhar" ou ' : ''}"Copiar texto" e cola-o numa conversa nova.
+            </p>
           )}
           {!tooLongForUrl && (
             <div className="button-row">
