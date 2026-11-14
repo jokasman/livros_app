@@ -6,10 +6,18 @@ import pkg from './package.json' with { type: 'json' }
 // BASE_PATH: caminho onde a app é publicada (ex.: "/livros_app/" no GitHub Pages).
 const base = process.env.BASE_PATH || '/'
 
+// Identificação da versão publicada: data/hora (Lisboa) + commit.
+const buildDate = new Intl.DateTimeFormat('pt-PT', {
+  timeZone: 'Europe/Lisbon',
+  dateStyle: 'short',
+  timeStyle: 'short',
+}).format(new Date())
+const commit = (process.env.GITHUB_SHA || 'local').slice(0, 7)
+
 export default defineConfig({
   base,
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
+    __APP_VERSION__: JSON.stringify(`${pkg.version} · ${buildDate} · ${commit}`),
   },
   plugins: [
     react(),
