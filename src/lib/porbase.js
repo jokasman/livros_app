@@ -204,15 +204,23 @@ async function fetchViaProxy(isbn, signal) {
   if (!supabase) throw new PorbaseError('Sem intermediário configurado.')
   const { data: { session } = {} } = await supabase.auth.getSession()
   const base = import.meta.env.VITE_SUPABASE_URL
-  const res = await fetch(`${base}/functions/v1/porbase?isbn=${isbn}`, {
-    signal,
-    headers: {
-      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-    },
-  })
+  let res
+  try {
+    res = await fetch(`${base}/functions/v1/porbase?isbn=${isbn}`, {
+      signal,
+      headers: {
+        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+    })
+  } catch (e) {
+    if (signal?.aborted) throw e
+    throw new PorbaseError(
+      'A BNP não aceita pedidos diretos da app e o intermediário "porbase" do Supabase não respondeu (provavelmente não está instalado).',
+    )
+  }
   if (res.status === 404 && !(res.headers.get('content-type') ?? '').includes('xml')) {
-    throw new PorbaseError('A função "porbase" do Supabase não está instalada.', 404)
+    throw new PorbaseError('A BNP não aceita pedidos diretos da app e a função "porbase" do Supabase não está instalada.', 404)
   }
   if (!res.ok) throw new PorbaseError(`O intermediário da Biblioteca Nacional respondeu ${res.status}.`, res.status)
   return res.text()
