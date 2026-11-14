@@ -1007,3 +1007,56 @@ input[type='date'] {
   user-select: text;
   -webkit-user-select: text;
 }
+
+/* ---------- Cartão de sugestões ---------- */
+
+.suggest-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #c9822f));
+  color: var(--accent-text);
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgb(124 74 30 / 0.25);
+}
+
+.suggest-card:active {
+  transform: scale(0.98);
+}
+
+.suggest-card-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.18);
+  font-size: 1.4rem;
+}
+
+.suggest-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.suggest-card-text strong {
+  font-size: 1.05rem;
+}
+
+.suggest-card-text span {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.suggest-card-arrow {
+  font-size: 1.8rem;
+  line-height: 1;
+  opacity: 0.8;
+}

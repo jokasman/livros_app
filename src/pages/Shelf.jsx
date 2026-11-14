@@ -94,13 +94,6 @@ export default function Shelf() {
     <div className="page">
       <header className="page-header">
         <h1>A minha estante</h1>
-        {counts.read > 0 && (
-          <div className="page-header-actions">
-            <Link to="/sugestoes" className="link-btn">
-              ✨ Sugestões
-            </Link>
-          </div>
-        )}
       </header>
 
       {books.length > 0 && (
@@ -110,6 +103,24 @@ export default function Shelf() {
           {counts.reading > 0 && ` · ${counts.reading} a ler`}
           {counts.want > 0 && ` · ${counts.want} por ler`}
         </p>
+      )}
+
+      {counts.read > 0 && (
+        <Link to="/sugestoes" className="suggest-card">
+          <span className="suggest-card-icon" aria-hidden="true">
+            ✨
+          </span>
+          <span className="suggest-card-text">
+            <strong>O que ler a seguir?</strong>
+            <span>
+              Pede sugestões a uma IA com base{' '}
+              {counts.read === 1 ? 'no teu livro lido' : `nos teus ${counts.read} livros lidos`}
+            </span>
+          </span>
+          <span className="suggest-card-arrow" aria-hidden="true">
+            ›
+          </span>
+        </Link>
       )}
 
       {offline && <p className="notice small">Sem ligação: a mostrar a última cópia guardada.</p>}
