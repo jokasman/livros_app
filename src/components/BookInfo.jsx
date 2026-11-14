@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { formatIsbn } from '../lib/isbn.js'
 import Cover from './Cover.jsx'
 
-const SOURCE_LABEL = { google: 'Google Books', openlibrary: 'Open Library', manual: 'Inserido à mão' }
+const SOURCE_LABEL = {
+  google: 'Google Books',
+  bnp: 'Biblioteca Nacional de Portugal',
+  openlibrary: 'Open Library',
+  manual: 'Inserido à mão',
+}
 
 function year(date) {
   return date?.match(/\d{4}/)?.[0] ?? date

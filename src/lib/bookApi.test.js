@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { lookupIsbn, mapGoogleVolume, mapOpenLibraryDoc, mergeResults, rankPortugueseFirst, searchBooks } from './bookApi.js'
+import { lookupIsbn, lookupIsbnDetailed, mapGoogleVolume, mapOpenLibraryDoc, mergeResults, rankPortugueseFirst, searchBooks } from './bookApi.js'
 
 const googleItem = {
   id: 'abc123',
@@ -123,12 +123,16 @@ describe('pesquisa', () => {
     expect(fetch.mock.calls.some((c) => /langRestrict|language=/.test(String(c[0])))).toBe(false)
   })
 
-  it('avisa quando a Google recusa e o ISBN não aparece', async () => {
+  it('indica o estado de cada fonte quando a Google recusa', async () => {
     stubFetch([
       ['googleapis.com', {}, 429],
       ['openlibrary.org/api/books', {}],
     ])
-    await expect(lookupIsbn('9780306406157')).rejects.toThrow(/Google Books recusou/)
+    const { book, sources } = await lookupIsbnDetailed('9780306406157')
+    expect(book).toBeNull()
+    expect(sources.google.status).toBe(429)
+    expect(sources.bnp).toBe('empty')
+    expect(sources.openlibrary).toBe('empty')
   })
 
   it('dá erro quando nenhuma fonte responde', async () => {

@@ -17,7 +17,7 @@ create table if not exists public.books (
   language       text,
   description    text,
   cover_url      text check (cover_url is null or length(cover_url) < 400000),
-  source         text not null default 'manual' check (source in ('google', 'openlibrary', 'manual')),
+  source         text not null default 'manual' check (source in ('google', 'bnp', 'openlibrary', 'manual')),
   source_id      text,
 
   -- Dados pessoais de leitura
@@ -80,3 +80,11 @@ create policy "books_delete_own" on public.books
 -- Utilizadores anónimos não têm qualquer acesso.
 revoke all on public.books from anon;
 grant select, insert, update, delete on public.books to authenticated;
+
+-- ---------------------------------------------------------------
+-- Atualização (nov. 2026): nova fonte "bnp" (Biblioteca Nacional).
+-- Para bases de dados criadas antes, basta correr este bloco.
+-- ---------------------------------------------------------------
+alter table public.books drop constraint if exists books_source_check;
+alter table public.books add constraint books_source_check
+  check (source in ('google', 'bnp', 'openlibrary', 'manual'));

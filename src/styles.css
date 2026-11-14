@@ -961,3 +961,27 @@ input[type='date'] {
     width: 150px;
   }
 }
+
+.source-report {
+  list-style: none;
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: left;
+  color: var(--text);
+}
+
+.source-report li + li {
+  margin-top: 4px;
+}
+
+.sources-details {
+  margin: 20px 0 8px;
+}
+
+.sources-details summary {
+  cursor: pointer;
+  padding: 6px 0;
+}

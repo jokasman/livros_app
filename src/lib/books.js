@@ -108,7 +108,12 @@ export async function findByIsbn(isbn13) {
 
 export async function addBook(book, userData) {
   const row = { ...pick(book, BOOK_FIELDS), ...pick(userData, USER_FIELDS) }
-  const { data, error } = await supabase.from('books').insert(row).select().single()
+  let { data, error } = await supabase.from('books').insert(row).select().single()
+  // Bases de dados criadas antes de existir a fonte "bnp" (ver supabase/schema.sql):
+  // guarda como "manual" em vez de falhar.
+  if (error?.code === '23514' && row.source === 'bnp') {
+    ;({ data, error } = await supabase.from('books').insert({ ...row, source: 'manual' }).select().single())
+  }
   if (error) {
     if (error.code === '23505') throw new Error('Este livro já está na tua estante.')
     throw error

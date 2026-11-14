@@ -1,4 +1,5 @@
 // Pesquisa de livros em bases públicas: Google Books (principal) e Open Library (alternativa).
+import { lookupPorbase } from './porbase.js'
 import { cleanIsbn, isbn13to10, isPortugalIsbn, isPortugueseIsbn, toIsbn13 } from './isbn.js'
 
 const GOOGLE_KEY = import.meta.env?.VITE_GOOGLE_BOOKS_KEY || ''
@@ -231,23 +232,49 @@ export async function searchBooks(text, mode = 'all', { signal, ptOnly = false }
   return { results, warnings }
 }
 
-/** Procura um livro pelo ISBN. Devolve o livro ou null. */
-export async function lookupIsbn(value, { signal } = {}) {
+export const SOURCE_NAMES = { google: 'Google Books', bnp: 'Biblioteca Nacional', openlibrary: 'Open Library' }
+
+function sourceStatus(result, found) {
+  if (result.status === 'fulfilled') return found ? 'found' : 'empty'
+  if (result.reason?.name === 'AbortError') return 'aborted'
+  return { error: result.reason?.message ?? 'erro', status: result.reason?.status ?? null }
+}
+
+/**
+ * Procura um ISBN nas três fontes (Google Books, Biblioteca Nacional, Open Library)
+ * e junta a informação. Devolve { book, sources } — sources indica o que cada
+ * fonte respondeu, para mostrar ao utilizador quando o livro não aparece.
+ */
+export async function lookupIsbnDetailed(value, { signal } = {}) {
   const isbn13 = toIsbn13(value)
   if (!isbn13) throw new Error('ISBN inválido.')
-  const [g, o] = await Promise.allSettled([
+  const [g, b, o] = await Promise.allSettled([
     searchGoogle('isbn', isbn13, signal),
+    lookupPorbase(isbn13, { signal }),
     lookupOpenLibraryIsbn(isbn13, signal),
   ])
-  const google = g.status === 'fulfilled' ? g.value.filter((b) => b.isbn13 === isbn13) : []
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+  const google = g.status === 'fulfilled' ? g.value.filter((x) => x.isbn13 === isbn13).slice(0, 1) : []
+  const bnp = b.status === 'fulfilled' && b.value ? [b.value] : []
   const ol = o.status === 'fulfilled' && o.value ? [o.value] : []
-  if (g.status === 'rejected' && o.status === 'rejected') {
+  // Google primeiro (tem capas); a BNP completa autores, editora e páginas; a Open Library o resto.
+  const book = mergeResults(mergeResults(google, bnp), ol)[0] ?? null
+  if (book && !book.cover_url) book.cover_url = openLibraryCoverByIsbn(isbn13)
+  return {
+    book,
+    sources: {
+      google: sourceStatus(g, google.length > 0),
+      bnp: sourceStatus(b, bnp.length > 0),
+      openlibrary: sourceStatus(o, ol.length > 0),
+    },
+  }
+}
+
+/** Procura um livro pelo ISBN. Devolve o livro ou null. */
+export async function lookupIsbn(value, opts = {}) {
+  const { book, sources } = await lookupIsbnDetailed(value, opts)
+  if (!book && Object.values(sources).every((s) => typeof s === 'object')) {
     throw new Error('Não foi possível contactar as bases de livros. Verifica a ligação à internet.')
   }
-  const merged = mergeResults(google.slice(0, 1), ol)
-  if (!merged[0] && g.status === 'rejected' && g.reason?.name !== 'AbortError') {
-    // Não sabemos se o livro existe: a fonte principal não respondeu.
-    throw new Error(`${failureWarning(g.reason).split('.')[0]}, e a Open Library não conhece este ISBN.`)
-  }
-  return merged[0] ?? null
+  return book
 }

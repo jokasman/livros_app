@@ -25,6 +25,15 @@ O URL e a chave pública (*publishable*) do projeto já estão em [`.env.product
 
 > A chave pública pode estar no código: sem sessão iniciada não dá acesso a nada, e com sessão só dá acesso aos livros do próprio utilizador. **Nunca** coloques aqui a *secret key* nem a *service_role*.
 
+### Biblioteca Nacional (livros portugueses por ISBN)
+
+Ao ler um código de barras, a app também consulta a PORBASE da Biblioteca Nacional de Portugal (`urn.porbase.org`), que tem quase todos os livros publicados em Portugal (incluindo infantis). Só funciona por ISBN.
+
+Se, num livro não encontrado, a app mostrar *"A função "porbase" do Supabase não está instalada"*, é porque a BNP não aceita pedidos diretos do browser. Nesse caso instala o intermediário:
+**Supabase → Edge Functions → Deploy a new function → Via Editor**, nome `porbase`, cola o conteúdo de [`supabase/functions/porbase/index.ts`](supabase/functions/porbase/index.ts) e carrega em **Deploy**.
+
+Para guardar livros com a fonte "Biblioteca Nacional", corre no SQL Editor o bloco final de [`supabase/schema.sql`](supabase/schema.sql) (a app funciona sem isso, mas guarda-os como "Inserido à mão").
+
 ### 2. Publicação no GitHub Pages
 
 1. No repositório: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
