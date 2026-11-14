@@ -63,3 +63,13 @@ export function formatIsbn(isbn13) {
   if (!isbn13) return ''
   return isbn13.length === 13 ? `${isbn13.slice(0, 3)}-${isbn13.slice(3)}` : isbn13
 }
+
+/** ISBN de editoras portuguesas (978-972, 978-989) ou brasileiras (978-85, 978-65). */
+export function isPortugueseIsbn(isbn13) {
+  return /^978(972|989|85|65)/.test(isbn13 ?? '')
+}
+
+/** ISBN de editoras de Portugal (978-972, 978-989). */
+export function isPortugalIsbn(isbn13) {
+  return /^978(972|989)/.test(isbn13 ?? '')
+}

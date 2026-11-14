@@ -22,7 +22,9 @@ export default function Search() {
   const saved = useRef(loadState()).current
   const [text, setText] = useState(saved?.text ?? '')
   const [mode, setMode] = useState(saved?.mode ?? 'all')
+  const [ptOnly, setPtOnly] = useState(saved?.ptOnly ?? true)
   const [results, setResults] = useState(saved?.results ?? null)
+  const [warnings, setWarnings] = useState(saved?.warnings ?? [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const ctrlRef = useRef(null)
@@ -33,14 +35,15 @@ export default function Search() {
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(STATE_KEY, JSON.stringify({ text, mode, results }))
+      sessionStorage.setItem(STATE_KEY, JSON.stringify({ text, mode, ptOnly, results, warnings }))
     } catch {
       /* ignora */
     }
-  }, [text, mode, results])
+  }, [text, mode, ptOnly, results, warnings])
 
-  const run = async (e) => {
+  const run = async (e, opts = {}) => {
     e?.preventDefault()
+    const pt = opts.ptOnly ?? ptOnly
     const q = text.trim()
     if (!q) return
     // Um ISBN completo vai diretamente para a ficha do livro.
@@ -53,8 +56,9 @@ export default function Search() {
     setLoading(true)
     setError('')
     try {
-      const r = await searchBooks(q, mode, { signal: ctrl.signal })
-      setResults(r)
+      const r = await searchBooks(q, mode, { signal: ctrl.signal, ptOnly: pt })
+      setResults(r.results)
+      setWarnings(r.warnings)
     } catch (err) {
       if (err.name !== 'AbortError') setError(err.message)
     } finally {
@@ -90,17 +94,39 @@ export default function Search() {
             </button>
           ))}
         </div>
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={ptOnly}
+            onChange={(e) => {
+              setPtOnly(e.target.checked)
+              if (results) run(null, { ptOnly: e.target.checked })
+            }}
+          />
+          <span>Só edições em português</span>
+        </label>
         <button className="btn btn-block" type="submit" disabled={!text.trim() || loading}>
           {loading ? 'A pesquisar…' : 'Pesquisar'}
         </button>
       </form>
 
       {error && <p className="error">{error}</p>}
+      {!loading && warnings.map((w) => (
+        <p key={w} className="notice small">{w}</p>
+      ))}
 
       {results && !loading && (
         <>
           <p className="muted small">
             {results.length === 0 ? 'Sem resultados.' : `${results.length} resultado${results.length === 1 ? '' : 's'}`}
+            {results.length === 0 && ptOnly && (
+              <>
+                {' '}
+                <button type="button" className="link-btn" onClick={() => { setPtOnly(false); run(null, { ptOnly: false }) }}>
+                  Procurar em todas as línguas
+                </button>
+              </>
+            )}
           </p>
           <ul className="result-list">
             {results.map((b, i) => (

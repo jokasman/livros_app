@@ -524,6 +524,27 @@ input[type='date'] {
   margin-bottom: 16px;
 }
 
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  min-height: 32px;
+}
+
+.toggle input {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.notice + .notice {
+  margin-top: 8px;
+}
+
 /* ---------- Estrelas ---------- */
 
 .stars {

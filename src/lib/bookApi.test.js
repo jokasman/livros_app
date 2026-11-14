@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { lookupIsbn, mapGoogleVolume, mapOpenLibraryDoc, mergeResults, searchBooks } from './bookApi.js'
+import { lookupIsbn, mapGoogleVolume, mapOpenLibraryDoc, mergeResults, rankPortugueseFirst, searchBooks } from './bookApi.js'
 
 const googleItem = {
   id: 'abc123',
@@ -71,17 +71,64 @@ describe('mapeamento', () => {
   })
 })
 
+describe('edições portuguesas', () => {
+  it('põe primeiro as edições de Portugal, depois Brasil/pt, depois o resto', () => {
+    const books = [
+      { title: 'EN', isbn13: '9780306406157', language: 'en' },
+      { title: 'BR', isbn13: '9788535914849', language: 'pt' },
+      { title: 'ES', isbn13: '9788408000000', language: 'es' },
+      { title: 'PT', isbn13: '9789896264612', language: null },
+    ]
+    expect(rankPortugueseFirst(books).map((b) => b.title)).toEqual(['PT', 'BR', 'EN', 'ES'])
+  })
+
+  it('na Open Library escolhe o ISBN português da obra', () => {
+    const doc = { ...olDoc, isbn: ['9780306406157', '9788535914849', '9789722110402'] }
+    expect(mapOpenLibraryDoc(doc, null, true).isbn13).toBe('9789722110402')
+    expect(mapOpenLibraryDoc(doc, null, true).language).toBe('pt')
+  })
+})
+
 describe('pesquisa', () => {
   it('usa a Open Library quando a Google falha', async () => {
     stubFetch([
       ['googleapis.com', {}, 429],
       ['openlibrary.org/search.json', { docs: [olDoc] }],
     ])
-    const r = await searchBooks('saramago', 'author')
-    expect(r).toHaveLength(1)
-    expect(r[0].source).toBe('openlibrary')
+    const { results, warnings } = await searchBooks('saramago', 'author')
+    expect(results).toHaveLength(1)
+    expect(results[0].source).toBe('openlibrary')
+    expect(warnings[0]).toMatch(/Google Books recusou/)
     const googleUrl = decodeURIComponent(fetch.mock.calls[0][0])
     expect(googleUrl).toContain('inauthor:"saramago"')
+  })
+
+  it('com ptOnly pede só edições em português às duas fontes', async () => {
+    stubFetch([
+      ['googleapis.com', { items: [] }],
+      ['openlibrary.org/search.json', { docs: [] }],
+    ])
+    await searchBooks('José Rodrigues dos Santos', 'author', { ptOnly: true })
+    const [gUrl, oUrl] = fetch.mock.calls.map((c) => String(c[0]))
+    expect(gUrl).toContain('langRestrict=pt')
+    expect(oUrl).toContain('language=por')
+  })
+
+  it('não filtra a língua numa pesquisa por ISBN', async () => {
+    stubFetch([
+      ['googleapis.com', { items: [] }],
+      ['openlibrary.org/search.json', { docs: [] }],
+    ])
+    await searchBooks('9789720046123', 'isbn', { ptOnly: true })
+    expect(fetch.mock.calls.some((c) => /langRestrict|language=/.test(String(c[0])))).toBe(false)
+  })
+
+  it('avisa quando a Google recusa e o ISBN não aparece', async () => {
+    stubFetch([
+      ['googleapis.com', {}, 429],
+      ['openlibrary.org/api/books', {}],
+    ])
+    await expect(lookupIsbn('9780306406157')).rejects.toThrow(/Google Books recusou/)
   })
 
   it('dá erro quando nenhuma fonte responde', async () => {
