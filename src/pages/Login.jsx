@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabase.js'
+import { emailLinkError, supabase } from '../lib/supabase.js'
 
 const redirectTo = () => window.location.origin + import.meta.env.BASE_URL
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [mode, setMode] = useState('login') // login | reset
+  const [mode, setMode] = useState(emailLinkError ? 'reset' : 'login') // login | reset
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(emailLinkError ?? '')
   const [info, setInfo] = useState('')
 
   const submit = async (e) => {
@@ -23,7 +23,7 @@ export default function Login() {
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: redirectTo() })
         if (error) throw error
-        setInfo('Se o email estiver registado, vais receber um link para definir uma nova palavra-passe.')
+        setInfo('Se o email estiver registado, vais receber um link para definires a palavra-passe. Abre-o neste telemóvel.')
       }
     } catch (err) {
       setError(translateAuthError(err))
@@ -70,7 +70,7 @@ export default function Login() {
             setInfo('')
           }}
         >
-          {mode === 'login' ? 'Esqueci-me da palavra-passe' : 'Voltar ao login'}
+          {mode === 'login' ? 'Primeiro acesso ou esqueci-me da palavra-passe' : 'Voltar ao login'}
         </button>
       </form>
       <p className="muted small center">
