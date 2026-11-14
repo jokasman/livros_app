@@ -28,12 +28,11 @@ O URL e a chave pública (*publishable*) do projeto já estão em [`.env.product
 ### 2. Publicação no GitHub Pages
 
 1. No repositório: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-2. *(Opcional, recomendado)* **Settings → Secrets and variables → Actions → Variables → New repository variable**: `VITE_GOOGLE_BOOKS_KEY` = chave da Google Books API.
 3. Cada `push` para `main` compila e publica em `https://jokasman.github.io/livros_app/`. Também podes correr o workflow à mão em **Actions → Publicar no GitHub Pages → Run workflow**.
 
 #### Chave da Google Books (recomendado)
 
-Sem chave, a Google limita o número de pesquisas por dia e por IP. Para criar uma chave gratuita: <https://console.cloud.google.com> → criar projeto → **APIs & Services → Library → Books API → Enable** → **Credentials → Create credentials → API key**. Em **restrições**, limita a chave a *HTTP referrers* `https://jokasman.github.io/*` e à *Books API*.
+A chave já está em `.env.production`. Sem chave, a Google limita o número de pesquisas por dia e por IP. Para criar uma chave gratuita: <https://console.cloud.google.com> → criar projeto → **APIs & Services → Library → Books API → Enable** → **Credentials → Create credentials → API key**. Em **restrições**, limita a chave a *HTTP referrers* `https://jokasman.github.io/*` e à *Books API*.
 
 ### 3. Convidar amigos
 
