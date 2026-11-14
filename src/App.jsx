@@ -12,6 +12,7 @@ import AddFromSearch from './pages/AddFromSearch.jsx'
 import ManualEntry from './pages/ManualEntry.jsx'
 import BookDetail from './pages/BookDetail.jsx'
 import Account from './pages/Account.jsx'
+import Suggestions from './pages/Suggestions.jsx'
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/'
 
@@ -42,6 +43,7 @@ function Gate() {
         <Route path="manual" element={<ManualEntry />} />
         <Route path="livro/:id" element={<BookDetail />} />
         <Route path="conta" element={<Account />} />
+        <Route path="sugestoes" element={<Suggestions />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

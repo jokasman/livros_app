@@ -94,6 +94,13 @@ export default function Shelf() {
     <div className="page">
       <header className="page-header">
         <h1>A minha estante</h1>
+        {counts.read > 0 && (
+          <div className="page-header-actions">
+            <Link to="/sugestoes" className="link-btn">
+              ✨ Sugestões
+            </Link>
+          </div>
+        )}
       </header>
 
       {books.length > 0 && (

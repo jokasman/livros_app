@@ -985,3 +985,25 @@ input[type='date'] {
   cursor: pointer;
   padding: 6px 0;
 }
+
+.page-header-actions .link-btn {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.prompt-preview summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.prompt-preview pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: 0.85rem;
+  margin: 12px 0 0;
+  max-height: 50vh;
+  overflow: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
