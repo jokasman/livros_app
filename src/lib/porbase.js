@@ -145,7 +145,7 @@ export function mapPorbaseRecord(fields, wantedIsbn13 = null) {
     authors: authorsOf(fields),
     publisher,
     published_date: year,
-    page_count: pages ? Number(pages) : null,
+    page_count: Number(pages) > 0 ? Number(pages) : null,
     language: first(fields, '101', 'a') === 'por' ? 'pt' : first(fields, '101', 'a'),
     description: summary ? `${summary}.` : null,
     cover_url: null,

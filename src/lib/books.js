@@ -36,6 +36,44 @@ function pick(obj, keys) {
   return out
 }
 
+const SOURCES = ['google', 'bnp', 'openlibrary', 'manual']
+const positiveInt = (v) => {
+  const n = Number(v)
+  return Number.isInteger(n) && n > 0 ? n : null
+}
+
+/**
+ * Garante que os dados respeitam as regras da base de dados (supabase/schema.sql).
+ * As fontes externas trazem por vezes valores inválidos (ex.: 0 páginas).
+ */
+export function sanitizeRow(row) {
+  const out = { ...row }
+  if ('title' in out) out.title = String(out.title ?? '').trim().slice(0, 500) || 'Sem título'
+  if ('page_count' in out) out.page_count = positiveInt(out.page_count)
+  if ('isbn13' in out && out.isbn13 != null && !/^97[89]\d{10}$/.test(out.isbn13)) out.isbn13 = null
+  if ('authors' in out) out.authors = (Array.isArray(out.authors) ? out.authors : []).map(String).filter(Boolean)
+  if ('cover_url' in out && out.cover_url != null && String(out.cover_url).length >= 400000) out.cover_url = null
+  if ('source' in out && !SOURCES.includes(out.source)) out.source = 'manual'
+  if ('status' in out && !['want', 'reading', 'read'].includes(out.status)) out.status = 'want'
+  if ('rating' in out && out.rating != null) {
+    const r = positiveInt(out.rating)
+    out.rating = r && r <= 5 ? r : null
+  }
+  return out
+}
+
+/** Traduz erros da base de dados para mensagens compreensíveis. */
+function friendlyError(error, fallback) {
+  if (error?.code === '23505') return new Error(fallback.duplicate)
+  if (error?.code === '23514') {
+    const field = error.message?.match(/books_(\w+?)_check/)?.[1]
+    return new Error(`Não foi possível guardar: um dos dados do livro não é válido${field ? ` (${field})` : ''}. Corrige-o em "Editar dados" ou tenta novamente.`)
+  }
+  if (error?.code === '42501') return new Error('Sem permissão para guardar. Termina a sessão e volta a entrar.')
+  if (/failed to fetch|network/i.test(error?.message ?? '')) return new Error('Sem ligação à internet. Tenta novamente.')
+  return new Error(error?.message || 'Não foi possível guardar.')
+}
+
 function readCache() {
   try {
     return JSON.parse(localStorage.getItem(CACHE_KEY) || 'null')
@@ -107,28 +145,22 @@ export async function findByIsbn(isbn13) {
 }
 
 export async function addBook(book, userData) {
-  const row = { ...pick(book, BOOK_FIELDS), ...pick(userData, USER_FIELDS) }
+  const row = sanitizeRow({ ...pick(book, BOOK_FIELDS), ...pick(userData, USER_FIELDS) })
   let { data, error } = await supabase.from('books').insert(row).select().single()
   // Bases de dados criadas antes de existir a fonte "bnp" (ver supabase/schema.sql):
   // guarda como "manual" em vez de falhar.
-  if (error?.code === '23514' && row.source === 'bnp') {
+  if (error?.code === '23514' && /source/.test(error.message ?? '') && row.source === 'bnp') {
     ;({ data, error } = await supabase.from('books').insert({ ...row, source: 'manual' }).select().single())
   }
-  if (error) {
-    if (error.code === '23505') throw new Error('Este livro já está na tua estante.')
-    throw error
-  }
+  if (error) throw friendlyError(error, { duplicate: 'Este livro já está na tua estante.' })
   patchCache((rows) => [data, ...rows])
   return data
 }
 
 export async function updateBook(id, changes) {
-  const row = pick(changes, [...BOOK_FIELDS, ...USER_FIELDS])
+  const row = sanitizeRow(pick(changes, [...BOOK_FIELDS, ...USER_FIELDS]))
   const { data, error } = await supabase.from('books').update(row).eq('id', id).select().single()
-  if (error) {
-    if (error.code === '23505') throw new Error('Já tens outro livro com este ISBN.')
-    throw error
-  }
+  if (error) throw friendlyError(error, { duplicate: 'Já tens outro livro com este ISBN.' })
   patchCache((rows) => rows.map((b) => (b.id === id ? data : b)))
   return data
 }
